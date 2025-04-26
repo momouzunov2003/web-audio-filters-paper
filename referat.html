@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="bg">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Web Audio API</title>
+        <link rel="stylesheet" href="css/styles.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
+    </head>
+
+    <body>
+    <header>
+        <div class="container">
+        <h1>Въведение в Web Audio API</h1>
+        <nav id="navbar">
+            <ul>
+                <li><a href="#intro">Въведение</a></li>
+                <li><a href="#sound">Накратко за звука</a></li>
+                <li><a href="#api">Web Audio API</a></li>
+                <li><a href="#oscillator">Осцилатор</a></li>
+                <li><a href="#audiobuffer">AudioBuffer</a></li>
+                <li><a href="#filters">Филтри</a></li>
+                <li><a href="#visualization">Визуализация</a></li>
+                <li><a href="#similar_api">Подобни АПИ</a></li>
+                <li><a href="#future">Бъдеще</a></li>
+                <li><a href="#references">Източници</a></li>
+            </ul>
+        </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="intro">
+            <h2>Въведение</h2>
+            <article>
+            <p>Аудиото в уеб пространството до 2011-та година било сравнително примитивно и до преди това е трябвало да се възпроизвежда чрез плъгини като Flash и QuickTime. Въвеждането на елемента &lt;audio&gt; в HTML5 е много важно, тъй като позволява простото стрийминг възпроизвеждане на аудио. Но той не е достатъчно мощен, за да се справи с по-сложни аудио приложения. За сложни уеб-базирани игри или интерактивни приложения е необходимо друго решение.</p>
+            </article>
+        </section>
+
+        <section id="sound">
+            <h2>Накратко за звука</h2>
+            <article>
+                <p>Звукът се определя като:</p>
+                <ul>
+                    <li>Колебание (осцилация) в налягане, напрежение, изместване на частици, скорост на частиците и т.н., разпространяващо се в среда с вътрешни сили.</li>
+                    <li>Слухово усещане, предизвикано от описаното колебание.</li>
+                    <li>Звукът може да бъде разглеждан като вълново движение във въздуха или в друга еластична среда (стимул) или като възбуждане на слуховия механизъм (усещане).</li>
+                </ul>
+            </article>
+        </section>
+
+        <section id="api">
+            <h2>Web Audio API</h2>
+            <article>
+                <p>Тази спецификация описва Web API на високо ниво за обработка и синтез на аудио в уеб приложения. Основният пример е аудио граф на маршрутизиране, при който множество обекти от тип <b>AudioNode</b> са свързани помежду си, за да се определи цялостното аудио възпроизвеждане.</p>
+                <p>Самата обработка се извършва основно в оптимизиран код на Assembly/C/C++, но също се поддържа и директна обработка и синтез чрез скриптове.</p>
+                <p><strong>Накратко:</strong> Web Audio API ни позволява да създаваме звук директно в браузъра.</p><br>
+                <h3>Нека да започнем</h3>
+                <p>За начало, преди да използваме Web Audio API, трябва да се запознаем с няколко термина, с които ще работим. Всички аудио операции в Web Audio API се извършват в т.нар. <i>аудио контекст (audio context/context)</i>.</p>
+                <figure>
+                    <img src="img/audio_context.jpeg" alt="Аудио контекст" width="80%">
+                    <figcaption>Аудио контекст</figcaption>
+                </figure>
+                
+                <p>Всяка базова аудио операция се извършва от аудио възли (audio nodes), които се свързват един за друг, образувайки граф за маршрутизиране на аудио (audio routing graph). Преди да можем да създадем какъвто и да било звук, трябва да създадем context. Това се случва по следния начин:</p>
+                <pre><code class="language-javascript">const context = new (window.AudioContext || window.webkitAudioContext)();</code></pre><br>
+                <p>Обикновено един Web Audio API работен поток изглежда така:</p>
+                <figure>
+                    <img src="img/workflow.jpg" id="workflow" alt="Работен поток" width="80%">
+                    <figcaption>Работен поток</figcaption>
+                </figure>
+                <p>Следващият термин, който ще трябва да изясним, за да продължим работа с Web Audio API е <i>осцилатор</i>.</p>
+            </article>
+        </section>
+
+        <section id="oscillator">
+        <h2>Осцилатор</h2>
+        <article>
+        <p>Осцилаторът е повтаряща се вълнова форма. Той има честота и пиковa амплитуда. Една от най-важните характеристики на осцилатора, освен честотата и амплитудата му, е формата на вълната. Четирите най-често използвани форми на вълната при осцилаторите са:</p>
+        <ul>
+            <li>Синусоида (sine)</li>
+            <li>Триъгълна (triangle)</li>
+            <li>Правоъгълна (square)</li>
+            <li>Трион (sawtooth)</li>
+        </ul>
+        <figure>
+            <img src="img/waveforms.jpg" id="waves" alt="Форми на вълната" width="80%">
+            <figcaption>Форми на вълната</figcaption>
+        </figure>
+        <p>Също е възможно и да се използва персонализирани вълни. Различните форми са подходящи за различни техники за синтезиране на аудио, като всяка форма възпроизвежда различен звук - от мек и плавен до рязък и груб.</p><br>
+        <p>Нека да видим как изглеждат тези вълнови форми в контекста на Web Audio API:</p>
+        <pre><code class="language-javascript">
+    OscillatorNode.type = 'sine'|'squre'|'sawtooth'|'triangle'; 
+        </code></pre>
+        <p>Нека да чуем как звучи всяка различна вълнова форма (за целта на демонстрацията ще използвам честота от 440Hz):</p>
+        <ul>
+            <li><button id="sine" onclick="startSine()">Синусоида старт</button></li>
+            <li><button id="square" onclick="startSquare()">Правоъгълна старт</button></li>
+            <li><button id="sawtooth" onclick="startSaw()">Трион старт</button></li>
+            <li><button id="triangle" onclick="startTri()">Триъгълна старт</button></li>
+        </ul>
+        <p>Сега ще разгледаме как се създава осцилатор. Стъпките са както следва:</p>
+        <ol>
+            <li>Създаваме Web Audio API context</li>
+            <li>Създаваме осцилатор чрез вече създадения context, посредством функцията createOscillator()</li>
+            <li>Избираме вълнова форма за осцилатора</li>
+            <li>Избираме честота</li>
+            <li>Свързваме осцилатора към дестинацията на контекста</li>
+            <li>Стартираме осцилатора</li>
+        </ol>
+        <p>Кодът изглежда по следния начин:</p>
+        <pre><code class="language-javascript">
+    var context = new (window.AudioContext || window.webkitAudioContext)();
+
+    var oscillator = context.createOscillator();
+            
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 440;
+    oscillator.connect(context.destination);
+    oscillator.start();
+        </code></pre>
+        <p>Тук е важно да отбележим, че context се създава с префикс webkit в случите, в които приложението се използва през браузъра Safari!</p>
+        <p>За да спрем осцилатора можем да използваме следната команда:</p>
+        <pre><code class="language-javascript">
+    oscillator.stop();
+        </code></pre>
+        <p>Важно е да се отбележи, че веднъж когато един осцилатор бъде спрян, то той не може да бъде пуснат наново. Това е така, защото по този начин Web Audio API оптимизира ефективността си.</p><br>
+        <p>Това беше прост пример за това как можем да синтезираме единична честота и да я спрем след това. Нека да разгледаме по-сложен пример, който ще покаже в контекст и нагледно по-добре начина, по който свързваме различни модули и от <a href="#workflow">source</a> стигаме до <a href="#workflow">destination</a>. Ще разгледаме паралелно графичен изглед на аудио контекста от дадения пример, а след това ще погледнем и кода</p>
+        <figure>
+            <img src="img/modular-routing3.png" id="modular" alt="Модулен граф" width="80%" height="50%">
+            <figcaption>Модулен граф</figcaption>
+        </figure>
+        <p>Да обясним накратко диаграмата. В случая source е първият осцилатор, който синтезира аудио сигнал с честота 1Hz, който след това бива пренасочен към gain модул. Gain модулите се използват за силата на звука (амплитудата) на аудио сигнала. В най-честия случай той се използва за промяна на силата на аудио сигнала. В случая сигналът, който излиза от първия осцилатор влиза в gain модула, където стойността 50 показва с колко цента (100 цента се равняват на един полутон в музиката) ще се променя нагоре и надолу честотата на сигнала, към който ще бъде приложен. След това сигналът, който излиза от gain модула бива пренасочен към втори осцилатор. Честотата на вторият осцилатор е настроена на стандартните 440 Hz, които съответстват на тона Ла. От там сигналът, излизащ от втория осцилатор се пренасочва към крайната дестинация – нашите говорители.</p><br>
+        <p>Важно е да се отбележи, че в този случай сигналът от gain модула се свързва със detune параметъра на втория осцилатор. Това означава че тонът, който съответства на сигнала на втория осцилатор, ще се променя с 50 цента нагоре и надолу всяка секунда (всяка секунда, защото честотата на първия осцилатор е 1Hz, т.е. по една пълна вълна в секунда).</p>
+        <p>Кодът, който реализира горната схема е следният:</p>
+        <pre><code class="language-javascript">
+    function setupRoutingGraph() {
+        const context = new AudioContext();
+        // Създаване на нискочестотен осцилатор, който подава модулиращия сигнал
+        const lfo = context.createOscillator();
+        lfo.frequency.value = 1.0;
+        // Създаване на високочестотен осцилатор, който ще бъде модулиран
+        const hfo = context.createOscillator();
+        hfo.frequency.value = 440.0;
+        // Създаване на усилвателен възел, чиято сила определя амплитудата на модулиращия сигнал
+        const modulationGain = context.createGain();
+        modulationGain.gain.value = 50;
+        // Конфигуриране на графа и стартиране на осцилаторите
+        lfo.connect(modulationGain);
+        modulationGain.connect(hfo.detune);
+        hfo.connect(context.destination);
+        hfo.start(0);
+        lfo.start(0);
+    }
+        </code></pre>
+        <p>В следващия пример е показан интересен начин за употреба на функциите на Web Audio API.</p>
+        <ul>
+            <li>"Сливане" на две различни песни, все едно са в плейлист. Това може да се случи чрез зареждане на двете песни, пускането им една след друга и чрез gain node-ове да се намали силата на първата песен в края ѝ и да се увеличи силата на втората в нейното начало.</li>
+            <li>На същия принцип може да се създаде и приложение, което да „миксира“, т.е. докато вървят едновременно два аудио сигнала, да бъде настроено кой да се чува по-силно или по-слабо. Нагледен пример можете да видите и чуете <a href="https://webaudioapi.com/samples/crossfade/" target="_blank">тук</a>.</li>
+        </ul>
+        </article>
+        </section>
+
+        <section id="audiobuffer">
+            <h2>AudioBuffer и AudioBufferSourceNode</h2>
+            <article>
+                <p>Някои звуци или песни са твърде комплексни, за да бъдат синтезирани чрез прост осцилатор. Затова чрез Web Audio API, могат да бъдат зареждани готови записани аудиофайлове.</p>
+                <p>AudioBuffer и AudioBufferSourceNode са два от основните компоненти в Web Audio API, когато искаме да възпроизведем записан аудио файл (а не генериран чрез осцилатор, например).</p>
+                <p>AudioBuffer е обект, който съдържа закодиран аудио сигнал в паметта. Тоест, той съдържа самите аудио данни, които можем да възпроизведем, обработим или манипулираме чрез Web Audio API.</p>
+                <p>AudioBufferSourceNode е източникът на аудиото – използваме го, за да „пуснем“ звука от AudioBuffer.</p>
+                <p>Представям примерен код, който зарежда .mp3 или .wav файл и го възпроизвежда чрез AudioBuffer и AudioBufferSourceNode:</p>
+                <pre><code class="language-javascript">
+    // 1. Създаваме аудио контекст
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    
+    // 2. Зареждаме аудио файл чрез fetch
+    fetch('audio/muzika.mp3')
+      .then(response => response.arrayBuffer())
+      .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer)) // декодиране на аудио
+      .then(audioBuffer => {
+        // 3. Създаване на AudioBufferSourceNode
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+                    
+        // 4. Свързване към дестинацията (говорителите)
+        source.connect(audioContext.destination);
+                    
+        // 5. Стартираме 
+        source.start(0);
+      })
+      .catch(e => console.error('Грешка при зареждане на звука:', e));
+                </code></pre>
+                <p>Вече след като знаем как да генерираме различни честоти, можем да направим нещо малко по-сложно. Например функционално пиано. <a href="https://andysylvester.com/files/tsw/ex04/index04.html" target="_blank">Тук</a> качвам линк към готово подобно приложение и <a href="https://github.com/andysylvester/TSW_WebAudioPrimer/tree/master/ex04" target="_blank">кодът</a>, който стои зад него.</p>
+            </article>
+        </section>
+
+        <section id="filters">
+        <h2>Филтри</h2>
+        <article>   
+            <p>Аудио схемите извършват обработка на сигнали, като по същество превръщат звуковите вълни в електрически сигнали, които след това могат да бъдат променяни чрез усилване, филтриране или смесване. Тези сигнали също могат да бъдат съхранявани и възпроизвеждани.</p>
+            <figure>
+                <img src="img/Block-Diagram-Audio-System.png" alt="Блокова схема на аудио система" width="80%">
+                <figcaption>Блокова схема на аудио система</figcaption>
+            </figure>
+            <p>Аудио филтрите са част от тази система и функционират като усилватели или пасивни схеми с характерна честотна реакция. Подобно на микрофоните и високоговорителите, тези филтри са важен елемент от основните градивни блокове на аудио системата. Те могат да усилват или отслабват определен честотен диапазон от аудио входа.</p>
+            <p>Все пак, тези филтри се различават от обикновен аудио усилвател или входен източник, който не функционира в зависимост от честотата. Усилвателят усилва целия входен аудио сигнал, независимо от неговата честота. От друга страна, аудио филтърът е усилвател, чиято работа зависи от честотата, в диапазона от 0 Hz до над 20 kHz. Чрез целенасочено усилване или отслабване на определен честотен диапазон в аудио сигнала, е възможно да се подобри тонът на входящото аудио.</p><br>
+            <h3>Видове филтри</h3>
+            <p>Аудио филтрите са електронни схеми, предназначени да усилват или отслабват определен диапазон от честотни компоненти. Те служат като уникален тип усилвател или пасивна схема с честотно-зависими изходи. По същество, тези филтри помагат за елиминирането на нежелан шум от аудио сигнала, подобрявайки тона на изхода.</p>
+            <p>Тези филтри играят важна роля в телекомуникациите и аудио електрониката и могат да бъдат класифицирани според техния дизайн, честотна характеристика или и двете.</p><br>
+            <h3>Според дизайна</h3>
+            <p>Аудио филтрите, класифицирани според дизайна си, биват два типа: пасивни и активни филтри. Електронно устройство, което изисква захранване за своята работа, се нарича активно, а такова, което не се нуждае от захранване – пасивно.</p>
+            <ul>
+                <li><strong>Активни филтри</strong> – изискват източник на захранване и се проектират с активни компоненти, като транзистори или операционни усилватели (оп-усилватели). Тези компоненти се нуждаят от постояннотоково захранване (DC) за своята поляризация. Използвайки активни компоненти, не е необходимо използването на индуктивности при изработката на филтъра, което намалява размера и цената на схемата и повишава нейната ефективност.</li>
+                <li><strong>Пасивни филтри</strong> - не се нуждаят от източник на захранване за да функционират. Те се проектират с пасивни компоненти, като резистори, кондензатори и индуктивности. Импедансът на кондензаторите и индуктивностите зависи от честотата, така че филтърът може да бъде изграден чрез комбинации от резистор-кондензатор (RC), резистор-индуктивност (RL) или резистор-кондензатор-индуктивност (RLC)</li>
+            </ul>
+            <h3>Филтрите в Web Audio API</h3>
+            <p>Web Audio API позволява да се добавят различни филтърни възли (filter nodes) между източника на звук и дестинацията. <i>BiquadFilterNode</i> е опростен филтър от нисък порядък, който ни дава контрол върху това кои части от честотния спектър да бъдат подсилени и кои да бъдат отслабени. Това позволява да създаваме приложения като еквалайзери и други аудио ефекти.</p>
+            <p>Съществуват 8 типа biquad филтри:</p>
+            <ul>
+            <li>highpass (високочестотен филтър)</li>
+            <li>lowpass (нискочестотен филтър)</li>
+            <li>bandpass (ленто-пропускащ филтър)</li>
+            <li>lowshelf (нискочестотно усилване/отслабване)</li>
+            <li>highshelf (високочестотно усилване/отслабване)</li>
+            <li>peaking (пиков филтър)</li>
+            <li>notch (пропускащ всички честоти освен една определена – „отсичащ“ филтър)</li>
+            <li>allpass (пропуска всички честоти, но променя фазата)</li>
+        </ul>
+        <p>Тези филтри са основен инструмент за прецизна обработка на аудио сигналите в уеб приложения.</p>
+        <p>Нека да обърнем внимание на някои определени филтри, като за всеки филтър ще има аудио тест, където може да се чуе ефектът от прилагането му.</p>
+        <ul>
+            <li>High-pass filter (HPF) - Пропуска сигнали с честота, по-висока от граничната (cutoff frequency), и блокира всички сигнали с честота, по-ниска от тази гранична честота.</li>
+            <figure>
+                <img src="img/highpass.png" alt="High-pass filter" width="80%">
+                <figcaption>High-pass филтър</figcaption>
+            </figure>
+            <li>Low-pass filter – пропуска сигнали с честота, по-ниска от граничната (cut-off), и блокира честоти, които са по-високи от нея. </li>
+            <figure>
+                <img src="img/lowpass.png" alt="Low-pass filter" width="80%">
+                <figcaption>Low-pass филтър</figcaption>
+            </figure>
+            <li>Band-pass filter – пропуска сигнали с честота в определен диапазон (между две гранични честоти) и блокира сигнали с честота извън този диапазон.</li>   
+            <figure>
+                <img src="img/bandpass.png" alt="Band-pass filter" width="80%">
+                <figcaption>Band-pass филтър</figcaption>
+            </figure>
+            <li>Lowshelf & Highshelf - използват се за контрол на басите и високите честоти в звука. Те служат за подсилване или отслабване на сигналите над или под дадена честота. </li>
+            <figure>
+                <img src="img/highshelf.png" alt="Highshelf filter" width="80%">
+                <figcaption>Highshelf филтър</figcaption>
+            </figure>
+            <figure>
+                <img src="img/lowshelf.png" alt="Lowshelf filter" width="80%">
+                <figcaption>Lowshelf филтър</figcaption>
+            </figure>
+            <li>Peaking - лентовозабраняващ филтър с изключително тесен забранен (stop-band) честотен диапазон. В резултат на това, тези филтри имат висок качествен фактор (Q-фактор), което означава, че могат много прецизно да потиснат една конкретна честота, без да влияят значително на останалите. Q-факторът показва колко "остър" е филтърът — по-висок Q означава по-тясна и по-прецизна честотна селекция.</li>
+            <figure>
+                <img src="img/peaking.jpg" alt="Peaking filter" width="80%">
+                <figcaption>Peaking филтър</figcaption>
+            </figure>
+        </ul>
+        <p><a href="http://www.smartjava.org/examples/webaudio-filters/" target="_blank">Тук</a> може да бъде разгледано уеб приложение, където могат да се разгледат различните филтри и как те влияят върху дадена честота.</p>
+        <p>След като разбрахме какво са филтрите и как въздействат върху звука, нека да разгледаме как се използват на практика.</p>
+        <p>BiquadFilterNode създаваме така:</p>
+        <pre><code class="language-javascript">
+    const filter = context.createBiquadFilter();
+        </code></pre>
+        <p>Параметри на филтъра могат да бъдат типа филтър(lowpass, highshelf или някой друг от останалите 6), стойност на Q, detune, честота и gain.</p>
+        <p>Те могат да бъдат зададени така:</p>
+        <pre><code class="language-javascript">
+    filter.type = 'lowpass'; // тип на филтъра
+    filter.frequency.value = 1000; // честота на филтъра
+    filter.Q.value = 1; // Q фактор на филтъра
+        </code></pre>
+        <p>След това филтърът може да бъде свързан преди или след всеки различен елемент от аудио веригата (разбира се, не преди първия).</p>
+        <pre><code class="language-javascript">
+    source.connect(filter); // свързване на източника с филтъра
+    filter.connect(context.destination); // свързване на филтъра с дестинацията (говорителите)
+        </code></pre>
+        </article>
+        </section>
+
+        <section id="visualization">
+        <h2>Визуализиране на аудио чрез Web Audio API</h2>
+        <article>
+            <p>Web Audio API ни позволява не само да възпроизвеждаме и обработваме звук, но и да го визуализираме в реално време. Това се прави с помощта на специален възел, наречен <i>AnalyserNode</i>.</p>
+            <p>AnalyserNode е възел, който анализира аудио сигнала и предоставя данни в реално време, които можем да използваме за визуализация. Той не променя сигнала, само го „наблюдава“. Поддържа два вида анализ:</p>
+            <ul>
+                <li><strong>Времеви домейн (time domain)</strong>: подходящ за визуализация на вълновата форма (осцилоскоп).</li>
+                <li><strong>Честотен домейн (frequency domain)</strong>: използва се за спектрален анализ (еквалайзер-подобен вид).</li>
+            </ul>
+            <p>Ето базов пример за визуализиране на аудио сигнал като честотен спектър чрез &lt;canvas&gt; и AnalyserNode:</p>
+            <pre><code class="language-html">
+    &lt;canvas id="visualizer" width="800" height="300"&gt;&lt;/canvas&gt; //HTML
+            </code></pre><br>
+            <pre><code class="language-javascript">
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const canvas = document.getElementById('visualizer');
+    const canvasCtx = canvas.getContext('2d');
+
+    // Създаваме analyser и други възли
+    const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256; // размерът на FFT – по-голям = по-фина резолюция
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    // Зареждаме и пускаме аудио
+    fetch('audio/song.mp3')
+    .then(res => res.arrayBuffer())
+    .then(buf => audioContext.decodeAudioData(buf))
+    .then(audioBuffer => {
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+
+        // Свързваме възлите
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
+        source.start();
+
+        draw(); // стартираме визуализацията
+    });
+
+    // Функция за рисуване на честотния спектър
+    function draw() {
+    requestAnimationFrame(draw);
+
+    analyser.getByteFrequencyData(dataArray); // вземаме текущия спектър
+
+    canvasCtx.fillStyle = 'rgb(0, 0, 0)';
+    canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const barWidth = (canvas.width / bufferLength) * 2.5;
+    let x = 0;
+
+    for (let i = 0; i < bufferLength; i++) {
+        const barHeight = dataArray[i];
+        canvasCtx.fillStyle = 'rgb(' + (barHeight + 100) + ',50,50)';
+        canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+        x += barWidth + 1;
+    }
+    }
+        </code></pre>
+        <p>Примерно визуализиране можете да видите <a href="http://www.smartjava.org/examples/webaudio-filters/" target="_blank">тук</a>.</p>
+        <p>След като се запознахме с базовите концепции в Web Audio API, можем да разгледаме малко по-сложни конструкции.</p>
+        <p><a href="http://noisehack.com/custom-audio-effects-javascript-web-audio-api/" target="_blank">тук</a> могат да се разгледат различни персонализирани аудио филтри, които използват по-сложна логика и базови елементи от Web Audio API.</p>
+        <p>Също така могат да бъдат направени и уеб приложения, които наподобяват работата на синтезатори, използвайки Gain, BiquadFilter, Oscillator възли и различни аудио вълни. <a href="https://noisehack.com/scissor/" target="_blank">Тук</a> може да бъде разгледан един подобен проект.</p>
+        </article>
+        </section>
+
+        <section id="similar_api">
+            <h2>Сравнение с други библиотеки</h2>
+            <article>
+                <p>Web Audio API е мощен и гъвкав инструмент, който предоставя директен достъп до възможностите за обработка и синтез на звук в браузъра. Въпреки това, заради по-ниското си ниво и нуждата от по-обстоен код, често се използва за основа, върху която са изградени други библиотеки. Такива библиотеки предоставят по-лесен синтаксис и готови структури, които улесняват разработката, особено за начинаещи или за по-бърза разработка на музикални уеб приложения.</p>
+                <p>Една от най-популярните библиотеки, базирани на Web Audio API, е <strong>Tone.js</strong>. Тя предлага по-високо ниво на абстракция и е създадена специално за музикални приложения. С Tone.js лесно могат да се създават секвенсъри, синтезатори, ефекти и ритмични структури с минимално количество код. Вместо ръчно създаване на осцилатори, филтри и времеви логики, Tone.js предоставя готови обекти като Synth, Player, Transport и Effect, което значително ускорява разработката.</p>
+                <p>Друга често използвана библиотека е <strong>Howler.js</strong>, която е по-фокусирана върху възпроизвеждането на аудио файлове. Тя не е толкова мощна в синтеза и манипулацията на звука, колкото Web Audio API или Tone.js, но е изключително удобна за изграждане на мултимедийни приложения, игри и сайтове, които използват звукови ефекти.</p>
+                <p>Съществува и <strong>P5.js</strong>, която макар и основно насочена към визуализации и творчески код, има модул за работа със звук (p5.sound), който е интуитивен за визуални артисти и начинаещи. Той също използва Web Audio API зад кулисите, но предлага функции за визуализация, аудио анализ и генерация в контекста на творчески проекти.</p>
+            </article>
+        </section>
+
+        <section id="future">
+            <h2>Бъдеще на Web Audio API</h2>
+            <article>
+                <p>С развитието на браузърите и на уеб технологиите като цяло, бъдещето на Web Audio API изглежда изключително обещаващо. Очаква се:</p>
+                <ul>
+                    <li>По-добра производителност чрез интеграция с WebAssembly – за още по-бърза и прецизна аудио обработка</li>
+                    <li>По-лесен достъп до хардуерни входове/изходи, като MIDI устройства и професионални аудио интерфейси</li>
+                    <li>Подобрена синхронизация между аудио и видео съдържание</li>
+                    <li>По-високо ниво на абстракция чрез интеграция с нови библиотеки и инструменти, които ще направят аудио програмирането още по-достъпно за начинаещи</li>
+                    <li>Интеграция с AI за генериране и обработка на звук в реално време</li>
+                </ul>
+                <p>С нарастващото значение на мултимедията в уеб пространството, Web Audio API ще продължи да бъде ключов инструмент за създаване на модерни, динамични и звуково ангажиращи уеб приложения.</p>
+            </article>
+        </section>
+
+        <section id="references">
+            <h2>Източници</h2>
+            <p>[1] Zach Denton, “Custom Audio Effects in JavaScript with the Web Audio API”, [http://noisehack.com/custom-audio-effects-javascript-web-audio-api/], последно посетен на 25.05.2025<br>
+                [2] Zach Denton, “How to Build a Monotron Synth with the Web Audio API”, [http://noisehack.com/how-to-build-monotron-synth-web-audio-api/],последно посетен на 25.05.2025<br>
+                [3] Zach Denton, “How to Build a Supersaw Synthesizer with the Web Audio API”, [http://noisehack.com/how-to-build-supersaw-synth-web-audio-api/],последно посетен на 25.05.2025<br>
+                [4] Joe Dirksen, “Exploring the HTML5 Web Audio API:Filters”, [http://www.smartjava.org/content/exploring-html5-web-audio-api-filters/], последно посетен на 26.05.2025<br>
+                [5] W3C, “Web Audio API 1.1”, [https://webaudio.github.io/web-audio-api/#audionode], последно посетен на 25.05.2025<br>
+                [6] Wikipedia, “Sound Definition”, [https://en.wikipedia.org/wiki/Sound#Definition], последно посетен на 23.05.2025<br>
+                [7] Andy Sylvester, “TSW_WebAudioPrimer Github repository”, [https://github.com/andysylvester/TSW_WebAudioPrimer], последно посетен на 24.05.2025<br>
+                [8] Diksha, “Audio Filters: Understanding the filters – Part 5”, [https://www.engineersgarage.com/tutorials/audio-filters-basics-of-audio-filters-5-8/], последно посетен на 25.05.2025<br>
+                [9] W3C, “Web Audio API Samples”, [https://webaudioapi.com/samples/], последно посетен на 25.05.2025<br>
+                [10] Greg Hovanesyan, “Introduction to Web Audio API”, [https://css-tricks.com/introduction-web-audio-api/], последно посетен на 25.05.2025
+                </p>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+        <p>&copy; 2025 Momchil Uzunov</p>
+        </div>
+    </footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <script src="javascript/scripts.js"></script>
+    </body>
+</html>
